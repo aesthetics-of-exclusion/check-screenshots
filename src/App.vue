@@ -64,6 +64,8 @@ export default {
       await this.addAnnotation(this.poiId, 'check', {
         valid
       })
+
+      this.loadScreenshot()
     },
     updateAnnotationCount: async function (poiId, type, increment) {
       const poiRef = this.getPoiRef(poiId)
