@@ -1,10 +1,13 @@
 <template>
   <div id="app">
     <div v-if="done">
-      Klaar! Alle screenshots zijn gecontroleerd!
+      <p>Klaar! Alle screenshots zijn gecontroleerd!</p>
     </div>
     <div v-else-if="!auth">
-      Log in om te beginnen:
+      <p>Log in om te beginnen</p>
+      <div class="buttons">
+        <button @click="loadScreenshot">Opnieuw proberen!</button>
+      </div>
     </div>
     <div v-else-if="poiId && annotation">
       <img :src="annotation.data.screenshotUrl" />
@@ -26,7 +29,8 @@ require('firebase/firestore')
 const redirectUrl = process.env.VUE_APP_REDIRECT_URL
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyBs2Skj5z7WjUe7w9TUvOv4Fz3gc9tSLcU',
+  apiKey: 'AIzaSyD9uv2hUKypY3QmQCpjpktTDvpPcEXzStY',
+
   authDomain: 'streetswipe-aoe.firebaseapp.com',
   databaseURL: 'https://streetswipe-aoe.firebaseio.com',
   projectId: 'streetswipe-aoe',
@@ -37,6 +41,7 @@ const firebaseConfig = {
 
 const uiConfig = {
   signInSuccessUrl: redirectUrl,
+  // signInFlow: 'popup',
   signInOptions: [
     firebase.auth.GoogleAuthProvider.PROVIDER_ID,
     firebase.auth.GithubAuthProvider.PROVIDER_ID
