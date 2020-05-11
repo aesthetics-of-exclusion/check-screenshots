@@ -1,6 +1,12 @@
 <template>
   <div id="app">
-    <div v-if="poiId && annotation">
+    <div v-if="done">
+      Klaar! Alle screenshots zijn gecontroleerd!
+    </div>
+    <div v-else-if="!auth">
+      Log in om te beginnen:
+    </div>
+    <div v-else-if="poiId && annotation">
       <img :src="annotation.data.screenshotUrl" />
       <div class="buttons">
         <button @click="submitCheck(true)">✅ Ja!</button>
@@ -13,7 +19,7 @@
 </template>
 
 <script>
-const firebase = require('firebase')
+const firebase = require('firebase/app')
 const firebaseui = require('firebaseui')
 require('firebase/firestore')
 
@@ -44,7 +50,10 @@ export default {
   data: function () {
     return {
       poiId: undefined,
-      annotation: undefined
+      annotation: undefined,
+      auth: false,
+      done: false,
+      error: ''
     }
   },
   methods: {
@@ -90,27 +99,32 @@ export default {
       return annotationRef
     },
     loadScreenshot: async function () {
-      const poisRef = this.db.collection('pois')
-      const poisQuery = poisRef
-        .where('annotations.check', '==', 0)
-        .limit(1)
+      try {
+        const poisRef = this.db.collection('pois')
+        const poisQuery = poisRef
+          .where('annotations.check', '==', 0)
+          .limit(1)
 
-      const poisSnapshot = await poisQuery.get()
+        const poisSnapshot = await poisQuery.get()
+        this.auth = true
 
-      if (poisSnapshot.docs.length) {
-        this.poiId = poisSnapshot.docs[0].id
+        if (poisSnapshot.docs.length) {
+          this.poiId = poisSnapshot.docs[0].id
 
-        const annotationsQuery = this.db.collection('pois')
-          .doc(this.poiId)
-          .collection('annotations')
-            .where('type', '==', 'screenshot')
-            .limit(1)
+          const annotationsQuery = this.db.collection('pois')
+            .doc(this.poiId)
+            .collection('annotations')
+              .where('type', '==', 'screenshot')
+              .limit(1)
 
-        const annotationsSnapshot = await annotationsQuery.get()
+          const annotationsSnapshot = await annotationsQuery.get()
 
-        this.annotation = annotationsSnapshot.docs[0].data()
-      } else {
-        console.log('nee!')
+          this.annotation = annotationsSnapshot.docs[0].data()
+        } else {
+          this.done = true
+        }
+      } catch (err) {
+        this.error = err.message
       }
     }
   },
@@ -127,6 +141,7 @@ export default {
 
 <style>
 body {
+  font-family: monospace;
   padding: 10px;
   margin: 0;
   display: flex;
