@@ -124,6 +124,7 @@ export default {
           this.done = true
         }
       } catch (err) {
+        console.error(err)
         this.error = err.message
       }
     }
