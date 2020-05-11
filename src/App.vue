@@ -9,56 +9,55 @@
         <button @click="loadScreenshot">Opnieuw proberen!</button>
       </div>
     </div>
-    <div v-else-if="poiId && annotation">
-      <img :src="annotation.data.screenshotUrl" />
+    <div v-else-if="poiId && annotations">
+      <h2>{{ osmAnnotation.data.properties.name }}</h2>
+      <h3>{{ addressAnnotation.data.address }}</h3>
+      <img :src="screenshotAnnotation.data.screenshotUrl" />
       <div class="buttons">
         <button @click="submitCheck(true)">✅ Ja!</button>
         <button @click="submitCheck(false)">❌ Nee!</button>
       </div>
     </div>
-    <div id="firebaseui-auth-container">
-    </div>
+    <section id="firebaseui-auth-container"></section>
   </div>
 </template>
 
 <script>
-const firebase = require('firebase/app')
-const firebaseui = require('firebaseui')
-require('firebase/firestore')
+import firebase from 'firebase/app'
+import * as firebaseui from 'firebaseui'
+import 'firebaseui/dist/firebaseui.css'
 
 const redirectUrl = process.env.VUE_APP_REDIRECT_URL
 
-const firebaseConfig = {
-  apiKey: 'AIzaSyD9uv2hUKypY3QmQCpjpktTDvpPcEXzStY',
-
-  authDomain: 'streetswipe-aoe.firebaseapp.com',
-  databaseURL: 'https://streetswipe-aoe.firebaseio.com',
-  projectId: 'streetswipe-aoe',
-  storageBucket: 'streetswipe-aoe.appspot.com',
-  messagingSenderId: '755260135363',
-  appId: '1:755260135363:web:5cf3d4e7403532b38b0f76'
-}
-
 const uiConfig = {
   signInSuccessUrl: redirectUrl,
-  // signInFlow: 'popup',
+  signInFlow: 'popup',
   signInOptions: [
-    firebase.auth.GoogleAuthProvider.PROVIDER_ID,
-    firebase.auth.GithubAuthProvider.PROVIDER_ID
+    firebase.auth.GoogleAuthProvider.PROVIDER_ID
   ]
 }
-
-firebase.initializeApp(firebaseConfig)
 
 export default {
   name: 'App',
   data: function () {
     return {
+      user: undefined,
       poiId: undefined,
-      annotation: undefined,
+      annotations: undefined,
       auth: false,
       done: false,
       error: ''
+    }
+  },
+  computed: {
+    osmAnnotation: function () {
+      return this.annotations.filter((annotation) => annotation.type === 'osm')[0]
+    },
+    addressAnnotation: function () {
+      return this.annotations.filter((annotation) => annotation.type === 'address')[0]
+    },
+    screenshotAnnotation: function () {
+      return this.annotations.filter((annotation) => annotation.type === 'screenshot')[0]
     }
   },
   methods: {
@@ -69,6 +68,9 @@ export default {
       await this.addAnnotation(this.poiId, 'check', {
         valid
       })
+
+      this.poiId = undefined
+      this.annotations = undefined
 
       this.loadScreenshot()
     },
@@ -121,12 +123,9 @@ export default {
           const annotationsQuery = this.db.collection('pois')
             .doc(this.poiId)
             .collection('annotations')
-              .where('type', '==', 'screenshot')
-              .limit(1)
 
           const annotationsSnapshot = await annotationsQuery.get()
-
-          this.annotation = annotationsSnapshot.docs[0].data()
+          this.annotations = annotationsSnapshot.docs.map((doc) => doc.data())
         } else {
           this.done = true
         }
@@ -136,9 +135,19 @@ export default {
       }
     }
   },
+  created: function () {
+    firebase.auth().onAuthStateChanged((user) => {
+      this.user = user
+    })
+  },
   mounted: function () {
-    this.ui = new firebaseui.auth.AuthUI(firebase.auth())
-    this.ui.start('#firebaseui-auth-container', uiConfig)
+    let ui = firebaseui.auth.AuthUI.getInstance()
+    if (!ui) {
+      ui = new firebaseui.auth.AuthUI(firebase.auth())
+    }
+
+    ui.start('#firebaseui-auth-container', uiConfig)
+    this.ui = ui
 
     this.db = firebase.firestore()
 
@@ -155,6 +164,10 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+h1, h2, h3 {
+  text-align: center;
 }
 
 #app {
