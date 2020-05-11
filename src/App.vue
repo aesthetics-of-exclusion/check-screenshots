@@ -23,17 +23,17 @@ const firebase = require('firebase/app')
 const firebaseui = require('firebaseui')
 require('firebase/firestore')
 
+const redirectUrl = process.env.VUE_APP_REDIRECT_URL
+
 const firebaseConfig = {
-  apiKey: 'AIzaSyALC88z2fkAGeC_DoXGVloL9zFyQoXEru4',
+  apiKey: 'AIzaSyBs2Skj5z7WjUe7w9TUvOv4Fz3gc9tSLcU',
   authDomain: 'streetswipe-aoe.firebaseapp.com',
   databaseURL: 'https://streetswipe-aoe.firebaseio.com',
   projectId: 'streetswipe-aoe',
   storageBucket: 'streetswipe-aoe.appspot.com',
   messagingSenderId: '755260135363',
-  appId: '1:755260135363:web:4f3496bc29a8691c8b0f76'
+  appId: '1:755260135363:web:5cf3d4e7403532b38b0f76'
 }
-
-const redirectUrl = process.env.VUE_APP_REDIRECT_URL
 
 const uiConfig = {
   signInSuccessUrl: redirectUrl,
