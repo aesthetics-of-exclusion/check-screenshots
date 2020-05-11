@@ -18,7 +18,7 @@ const firebaseui = require('firebaseui')
 require('firebase/firestore')
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyBBXAZEYCxqiPpCXpTH7XU_Vixg0ymZkfA',
+  apiKey: 'AIzaSyALC88z2fkAGeC_DoXGVloL9zFyQoXEru4',
   authDomain: 'streetswipe-aoe.firebaseapp.com',
   databaseURL: 'https://streetswipe-aoe.firebaseio.com',
   projectId: 'streetswipe-aoe',
