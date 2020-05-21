@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import App from './App.vue'
 
-import firebase from 'firebase'
+import * as firebase from 'firebase/app'
 
 const firebaseConfig = {
   apiKey: 'AIzaSyD9uv2hUKypY3QmQCpjpktTDvpPcEXzStY',
@@ -18,5 +18,5 @@ firebase.initializeApp(firebaseConfig)
 Vue.config.productionTip = false
 
 new Vue({
-  render: h => h(App),
+  render: h => h(App)
 }).$mount('#app')

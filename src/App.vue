@@ -23,7 +23,7 @@
 </template>
 
 <script>
-import firebase from 'firebase/app'
+import * as firebase from 'firebase'
 import * as firebaseui from 'firebaseui'
 import 'firebaseui/dist/firebaseui.css'
 
@@ -69,6 +69,10 @@ export default {
         valid
       })
 
+      if (valid) {
+        await this.setNextAnnotations(this.poiId, ['facade'])
+      }
+
       this.poiId = undefined
       this.annotations = undefined
 
@@ -106,6 +110,12 @@ export default {
       })
 
       return annotationRef
+    },
+    setNextAnnotations: async function (poiId, types) {
+      const poiRef = this.getPoiRef(poiId)
+      const nextAnnotations = Object.assign(...types.map((type) => ({[`annotations.${type}`]: 0})))
+      const updatedPoiRef = await poiRef.update(nextAnnotations)
+      return updatedPoiRef
     },
     loadScreenshot: async function () {
       try {
