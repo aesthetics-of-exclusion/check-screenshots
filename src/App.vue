@@ -10,7 +10,7 @@
       </div>
     </div>
     <div v-else-if="poiId && annotations">
-      <h2>{{ osmAnnotation.data.properties.name }}</h2>
+      <h2>{{ name }}</h2>
       <h3>{{ addressAnnotation.data.address }}</h3>
       <img :src="screenshotAnnotation.data.screenshotUrl" />
       <div class="buttons">
@@ -50,6 +50,18 @@ export default {
     }
   },
   computed: {
+    name: function () {
+      if (this.osmAnnotation) {
+        return osmAnnotation.data.properties.name
+      } else if (this.faillissementsdossierAnnotation) {
+        return this.faillissementsdossierAnnotation.data.name
+      }
+
+      return ''
+    },
+    faillissementsdossierAnnotation: function () {
+      return this.annotations.filter((annotation) => annotation.type === 'faillissementsdossier')[0]
+    },
     osmAnnotation: function () {
       return this.annotations.filter((annotation) => annotation.type === 'osm')[0]
     },
