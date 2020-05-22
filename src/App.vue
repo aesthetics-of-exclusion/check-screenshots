@@ -52,7 +52,7 @@ export default {
   computed: {
     name: function () {
       if (this.osmAnnotation) {
-        return osmAnnotation.data.properties.name
+        return this.osmAnnotation.data.properties.name
       } else if (this.faillissementsdossierAnnotation) {
         return this.faillissementsdossierAnnotation.data.name
       }
