@@ -90,27 +90,7 @@ export default {
 
       this.loadScreenshot()
     },
-    updateAnnotationCount: async function (poiId, type, increment) {
-      const poiRef = this.getPoiRef(poiId)
-      const poi = await poiRef.get()
-
-      let updatedPoiRef
-      if (increment !== undefined) {
-        const count = (poi.annotations && poi.annotations[type]) || 0
-        updatedPoiRef = await poiRef.update({
-          [`annotations.${type}`]: count + increment
-        })
-      } else {
-        updatedPoiRef = poiRef.update({
-          [`annotations.${type}`]: FieldValue.delete()
-        })
-      }
-
-      return updatedPoiRef
-    },
     addAnnotation: async function (poiId, type, data) {
-      await this.updateAnnotationCount(poiId, type, 1)
-
       const poiRef = this.getPoiRef(poiId)
 
       const annotationRef = await poiRef.collection('annotations').doc().set({
@@ -122,12 +102,6 @@ export default {
       })
 
       return annotationRef
-    },
-    setNextAnnotations: async function (poiId, types) {
-      const poiRef = this.getPoiRef(poiId)
-      const nextAnnotations = Object.assign(...types.map((type) => ({[`annotations.${type}`]: 0})))
-      const updatedPoiRef = await poiRef.update(nextAnnotations)
-      return updatedPoiRef
     },
     loadScreenshot: async function () {
       try {
@@ -145,6 +119,7 @@ export default {
           const annotationsQuery = this.db.collection('pois')
             .doc(this.poiId)
             .collection('annotations')
+            .where('type', 'in', ['osm', 'screenshot', 'address', 'faillissementsdossier'])
 
           const annotationsSnapshot = await annotationsQuery.get()
           this.annotations = annotationsSnapshot.docs.map((doc) => doc.data())
