@@ -10,6 +10,7 @@
       </div>
     </div>
     <div v-else-if="!data">
+      <p>Laden...</p>
       <div class="buttons">
         <button @click="loadScreenshot">Opnieuw proberen!</button>
       </div>
@@ -71,6 +72,11 @@ export default {
     }
   },
   methods: {
+    reset: function () {
+      this.data = undefined
+      this.done =  false,
+      this.error = undefined
+    },
     saveAnnotation: async function (data) {
       const poiId = this.poiId
       const annotationType = 'check'
@@ -78,6 +84,7 @@ export default {
       const url = `${apiUrl}/${poiId}/${annotationType}`
 
       try {
+        this.reset()
         await axios.post(url, data)
         this.loadScreenshot()
       } catch (err) {
@@ -85,9 +92,7 @@ export default {
       }
     },
     loadScreenshot: async function () {
-      this.data = undefined
-      this.done =  false,
-      this.error = undefined
+      this.reset()
 
       try {
         const response = await axios.get(`${apiUrl}/next/check`)
