@@ -3,8 +3,13 @@
     <div v-if="done">
       <p>Klaar! Alle screenshots zijn gecontroleerd!</p>
     </div>
-    <div v-else-if="!auth">
-      <p>Log in om te beginnen</p>
+    <div v-else-if="error">
+      <p class="error">{{ error }}</p>
+      <div class="buttons">
+        <button @click="loadScreenshot">Opnieuw proberen!</button>
+      </div>
+    </div>
+    <div v-else-if="!data">
       <div class="buttons">
         <button @click="loadScreenshot">Opnieuw proberen!</button>
       </div>
@@ -14,42 +19,35 @@
       <h3>{{ addressAnnotation.data.address }}</h3>
       <img :src="screenshotAnnotation.data.screenshotUrl" />
       <div class="buttons">
-        <button @click="submitCheck(true)">✅ Ja!</button>
-        <button @click="submitCheck(false)">❌ Nee!</button>
+        <button @click="saveAnnotation({valid: true})">✅ Goedkeuren</button>
+        <button @click="saveAnnotation({improve: true})">🔄 Screenshot verbeteren</button>
+        <button @click="saveAnnotation({valid: false})">❌ Afkeuren</button>
       </div>
     </div>
-    <section id="firebaseui-auth-container"></section>
   </div>
 </template>
 
 <script>
-import * as firebase from 'firebase'
-import * as firebaseui from 'firebaseui'
-import 'firebaseui/dist/firebaseui.css'
+import axios from 'axios'
 
-const redirectUrl = process.env.VUE_APP_REDIRECT_URL
-
-const uiConfig = {
-  signInSuccessUrl: redirectUrl,
-  signInFlow: 'popup',
-  signInOptions: [
-    firebase.auth.GoogleAuthProvider.PROVIDER_ID
-  ]
-}
+const apiUrl = process.env.VUE_APP_API_URL
 
 export default {
   name: 'App',
   data: function () {
     return {
-      user: undefined,
-      poiId: undefined,
-      annotations: undefined,
-      auth: false,
+      data: undefined,
       done: false,
-      error: ''
+      error: undefined
     }
   },
   computed: {
+    poiId: function () {
+      return this.data && this.data.id
+    },
+    annotations: function () {
+      return this.data && this.data.annotations
+    },
     name: function () {
       if (this.osmAnnotation) {
         return this.osmAnnotation.data.properties.name
@@ -73,81 +71,37 @@ export default {
     }
   },
   methods: {
-    getPoiRef: function (poiId) {
-      return this.db.collection('pois').doc(poiId)
-    },
-    submitCheck: async function (valid) {
-      await this.addAnnotation(this.poiId, 'check', {
-        valid
-      })
+    saveAnnotation: async function (data) {
+      const poiId = this.poiId
+      const annotationType = 'check'
 
-      if (valid) {
-        await this.setNextAnnotations(this.poiId, ['facade'])
-      }
+      const url = `${apiUrl}/${poiId}/${annotationType}`
 
-      this.poiId = undefined
-      this.annotations = undefined
-
-      this.loadScreenshot()
-    },
-    addAnnotation: async function (poiId, type, data) {
-      const poiRef = this.getPoiRef(poiId)
-
-      const annotationRef = await poiRef.collection('annotations').doc().set({
-        poiId,
-        dateCreated: new Date(),
-        dateUpdated: new Date(),
-        type,
-        data
-      })
-
-      return annotationRef
-    },
-    loadScreenshot: async function () {
       try {
-        const poisRef = this.db.collection('pois')
-        const poisQuery = poisRef
-          .where('annotations.check', '==', 0)
-          .limit(1)
-
-        const poisSnapshot = await poisQuery.get()
-        this.auth = true
-
-        if (poisSnapshot.docs.length) {
-          this.poiId = poisSnapshot.docs[0].id
-
-          const annotationsQuery = this.db.collection('pois')
-            .doc(this.poiId)
-            .collection('annotations')
-            .where('type', 'in', ['osm', 'screenshot', 'address', 'faillissementsdossier'])
-
-          const annotationsSnapshot = await annotationsQuery.get()
-          this.annotations = annotationsSnapshot.docs.map((doc) => doc.data())
-        } else {
-          this.done = true
-        }
+        await axios.post(url, data)
+        this.loadScreenshot()
       } catch (err) {
-        console.error(err)
         this.error = err.message
       }
+    },
+    loadScreenshot: async function () {
+      this.data = undefined
+      this.done =  false,
+      this.error = undefined
+
+      try {
+        const response = await axios.get(`${apiUrl}/next/check`)
+        this.data = response.data
+      } catch (err) {
+        if (err.response && err.response.status === 404) {
+          this.done = true
+        } else {
+          this.error = err.message
+        }
+      }
     }
-  },
-  created: function () {
-    firebase.auth().onAuthStateChanged((user) => {
-      this.user = user
-    })
   },
   mounted: function () {
-    let ui = firebaseui.auth.AuthUI.getInstance()
-    if (!ui) {
-      ui = new firebaseui.auth.AuthUI(firebase.auth())
-    }
-
-    ui.start('#firebaseui-auth-container', uiConfig)
-    this.ui = ui
-
-    this.db = firebase.firestore()
-
     this.loadScreenshot()
   }
 }
