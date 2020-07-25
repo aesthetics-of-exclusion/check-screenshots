@@ -247,6 +247,12 @@ img {
   margin: 5px;
 }
 
+button:focus {
+  border: none;
+  outline:none;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
 .gradient-button {
   color: #fff;
   text-transform: uppercase;
